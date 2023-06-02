@@ -1,0 +1,81 @@
+name: publishing to Nuget server
+description: The action of publishing an extension to a Nuget server
+inputs:
+  nugetServerUrl:
+    description: Url(Nuget Server) 
+    required: true
+  nugetServerKey:
+    description: API Key(Nuget Server) 
+    required: true
+  srcDir:
+    description: Source Directory
+    default: \src
+    required: false
+  tmpDir:
+    description: Temporary Directory (package)
+    default: \packages
+    required: false
+runs:
+  using: "composite"
+  steps:
+    # ndextのインストール @https://docs.nextdesign.app/extension/docs/tools/ndext/installation
+    - name: Setup NDext
+      id: setup-ndext
+      shell: pwsh
+      run: |
+        dotnet tool install --global NDExt
+        ndext install
+
+    # ビルドとパッケージング
+    - name: Build & Pack (NDExt)
+      id: build-and-pack
+      shell: pwsh
+      run: |
+        $base_dir = (Convert-Path .)
+        $pkg_dir = $base_dir + ${{ inputs.tmpDir }}
+        $src_dir = $base_dir + ${{ inputs.srcDir }}
+
+        Push-Location $src_dir
+        foreach ($dir in $(Get-ChildItem * | ? { $_.PSIsContainer }))
+        {
+          Push-Location $dir
+          if ($(Get-ChildItem *.csproj -Recurse | Test-Path))
+          {
+            $xml_doc = [xml](cat $(Get-ChildItem *.csproj -Recurse) -enc utf8)
+            $xml_nav = $xml_doc.CreateNavigator()
+
+            $pkg_name = $pkg_dir + "\"
+            $pkg_name += $xml_nav.Select("//PackageId").Value
+            $pkg_name += "."
+            $pkg_name += $xml_nav.Select("//Version").Value
+            $pkg_name += ".nupkg"
+        
+            if (!$(Test-Path $pkg_name))
+            {
+              ndext pack -o $pkg_dir
+            }
+            else
+            {
+              echo ($msg = $pkg_name + "is exist")
+            }
+        
+          }
+          Pop-Location
+        }
+        Pop-Location
+
+    # Nugetサーバへのnupkgの登録
+    - name: Publish to GitHub Packages
+      id: publish
+      shell: pwsh
+      run: |
+        $base_dir = (Convert-Path .)
+        $pkg_dir = $base_dir + ${{ inputs.tmpDir }}
+
+        Push-Location $pkg_dir
+        dotnet nuget push "*.nupkg" --api-key ${{ inputs.nugetServerKey }} --source ${{ inputs.nugetServerUrl }} --skip-duplicate
+        Pop-Location
+
+branding:
+  icon: cloud-lightning
+  color: green
