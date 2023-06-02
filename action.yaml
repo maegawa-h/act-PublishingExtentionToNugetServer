@@ -33,10 +33,15 @@ runs:
       id: build-and-pack
       shell: pwsh
       run: |
+        pwd
+        ls -R
         $base_dir = (Convert-Path .)
+        echo $base_dir
         $pkg_dir = "$base_dir${{ inputs.tmpDir }}"
         $src_dir = "$base_dir${{ inputs.srcDir }}"
 
+        echo pkg = $pkg_dir
+        echo src = $src_dir
         Push-Location $src_dir
         foreach ($dir in $(Get-ChildItem * | ? { $_.PSIsContainer }))
         {
