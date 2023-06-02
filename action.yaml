@@ -9,10 +9,12 @@ inputs:
     required: true
   srcDir:
     description: Source Directory
+    type: string
     default: \src
     required: false
   tmpDir:
     description: Temporary Directory (package)
+    type: string
     default: \packages
     required: false
 runs:
