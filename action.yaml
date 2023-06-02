@@ -34,8 +34,8 @@ runs:
       shell: pwsh
       run: |
         $base_dir = (Convert-Path .)
-        $pkg_dir = $base_dir + ${{ inputs.tmpDir }}
-        $src_dir = $base_dir + ${{ inputs.srcDir }}
+        $pkg_dir = $base_dir + "${{ inputs.tmpDir }}"
+        $src_dir = $base_dir + "${{ inputs.srcDir }}"
 
         Push-Location $src_dir
         foreach ($dir in $(Get-ChildItem * | ? { $_.PSIsContainer }))
