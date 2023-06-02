@@ -10,12 +10,12 @@ inputs:
   srcDir:
     description: Source Directory
     type: string
-    default: \src
+    default: .\src
     required: false
   tmpDir:
     description: Temporary Directory (package)
     type: string
-    default: \packages
+    default: .\packages
     required: false
 runs:
   using: "composite"
@@ -34,8 +34,8 @@ runs:
       shell: pwsh
       run: |
         $base_dir = (Convert-Path .)
-        $pkg_dir = $base_dir + [string](${{ inputs.tmpDir }})
-        $src_dir = $base_dir + [string](${{ inputs.srcDir }})
+        $pkg_dir = "$base_dir${{ inputs.tmpDir }}"
+        $src_dir = "$base_dir${{ inputs.srcDir }}"
 
         Push-Location $src_dir
         foreach ($dir in $(Get-ChildItem * | ? { $_.PSIsContainer }))
@@ -72,7 +72,7 @@ runs:
       shell: pwsh
       run: |
         $base_dir = (Convert-Path .)
-        $pkg_dir = $base_dir + [string](${{ inputs.tmpDir }})
+        $pkg_dir = "$base_dir${{ inputs.tmpDir }}"
 
         Push-Location $pkg_dir
         dotnet nuget push "*.nupkg" --api-key ${{ inputs.nugetServerKey }} --source ${{ inputs.nugetServerUrl }} --skip-duplicate
